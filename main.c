@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <conio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include<stdio.h>
+#include<conio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<time.h>
 #define subjects 5
 
 //global variables
@@ -33,7 +33,6 @@ void sort_menu();
 void alphabetical_sort();
 void sort_by_rollno();
 void sort_by_gpa();
-
 //auxiliary functions
 void about();
 void line();
@@ -45,7 +44,7 @@ int	counter();
 int main()
 {
 	//font color
-	system("color 4");
+	system("color 3");
 	
 //	login_page();	
 					/**comenting it out just for now 
@@ -79,7 +78,7 @@ void login_page()
     printf("\tEnter password : ");
 	scanf("%s",password);
 	
-    if(strncmp(username,userid,10)==0 && strncmp(password,passcode,10)==0)	
+    if(strncmp(username,userid,10)==0 && strncmp(password,passcode,10)==0)	//strncmp helps to control buffer overflow , useful for security purpose
     {
     	system("cls");
         menu();
@@ -99,7 +98,7 @@ void menu()
 	int choice;
 	time_t t;
 	time(&t);
-	
+	system("cls");
 	do{
 		line();
 		printf("\n\tWELCOME TO THE MAIN MENU\t\t\t\t%s\n",ctime(&t));
@@ -154,75 +153,81 @@ void menu()
 void add_record()
 {
 	FILE *fp = fopen("student_record.txt","a+");
-	student *s,*temp;
-	int i,j,n=0,k,count=0;
+	student std,temp;
 	
+	system("cls");
 	line();
 	printf("\tADD STUDENT RECORD MENU\n");
 	line();
 	
-	printf("\tEnter how many students you want to record: ");
-	scanf("%d",&n);
-	fflush(stdin);
-	s = (student*)calloc(n,sizeof(student));
+	int j; char yesno;
+	std.total = 0;std.percent = 0;
 	
-	for(i=0;i<n;i++)
-	{	
-		printf("\n\tNo.%d\n",i+1);
-		rollno:
+	printf("\tRecord No. %d",(counter()+1));
+	rollno:
+
+	printf("\n\tEnter Rollno : ");
+	scanf("%d",&std.rollno);
 		fflush(stdin);
-		printf("\tEnter Rollno : ");
-		scanf("%d",&s[i].rollno);
-		//if user input strings or other data type
-		if(s[i].rollno <= 0)	// because if user input character in %d(integer data type), it returns 0
+	//if user input strings or other data type
+	if(std.rollno <= 0)	// because if user input character in %d(integer data type), it returns 0
+	{
+		printf("\tInvalid Rollnumber!!\n");
+		goto rollno;		
+	}	
+	//checking if the rollno, user is trying already exists in the record
+	while(fread(&temp,sizeof(temp),1,fp))
+	{
+		if(std.rollno == temp.rollno)
 		{
-			printf("\tInvalid Rollnumber!!\n\n");
-			goto rollno;		
-		}	
-	
-		name:
-		fflush(stdin);
-		printf("\tEnter FULL Name : ");
-		scanf("%[^\n]s",s[i].name);
-		
-		//if user inputs other than alphabets
-		if(nameChecker(s[i].name) == 1)
-		{
-			printf("\tInvalid Name! Please use Alphabets only\n");	//Sorry Elon Musk and son
-			goto name;
+			printf("\tRollnumber already exists!");
+			goto rollno;
 		}
-		s[i].total = 0;
-		s[i].percent =0;
-		for(j=0;j<subjects;j++)
-		{
-			fflush(stdin);
-			enterMarks:		//if total exceeds the limit
-			printf("\tEnter marks of %s: ",subject[j]);
-			scanf("%f",&s[i].marks[j]);
-			//verifying if marks is not greater or less than it should be
-			if(s[i].marks[j] < 0 || s[i].marks[j] > 100)
-			{
-				printf("\n\tMarks cannot be Greater than 100 and Lesser than 0!!\n");
-				printf("\tEnter the Marks Again CAREFULLY.\n\n");
-				goto enterMarks;
-			}
-			s[i].total += s[i].marks[j];
-		}
-		s[i].percent = s[i].total/subjects;
-		s[i].gpa = s[i].percent/25;
-		strcpy(s[i].grade,grade_calc(s[i].percent));
-		
-		//writing records into the file
-		fwrite(&s[i],sizeof(student),1,fp);
-		
-		printf("\n\tRecord Successfully Stored!\n");
-		printf("\t_____________________________________\n");
 	}
-	printf("\t");
-	system("pause");
-	system("cls");
+	name:
+
+	printf("\tEnter FULL Name : ");
+	scanf("%[^\n]s",std.name);
+		fflush(stdin);
+	//if user inputs other than alphabets
+	if(nameChecker(std.name) == 1)
+	{
+		printf("\tInvalid Name! Please use Alphabets only\n");	//Sorry Elon Musk and son
+		goto name;
+	}
 	
+	for(j=0;j<subjects;j++)
+	{
+		enterMarks:		//if total exceeds the limit	
+		printf("\tEnter marks of %s: ",subject[j]);
+		scanf("%f",&std.marks[j]);
+		fflush(stdin);
+		//verifying if marks is not greater or less than it should be
+		if(std.marks[j] < 0 || std.marks[j] > 100)
+		{
+			printf("\n\tMarks cannot be Greater than 100 and Lesser than 0!!\n");
+			printf("\tEnter the Marks Again CAREFULLY.\n\n");
+			goto enterMarks;
+		}
+		std.total += std.marks[j];
+	}
+	std.percent = std.total/subjects;		//calculating percentage of student
+	std.gpa = std.percent/25;				//calculating gpa from percent
+	strcpy(std.grade,grade_calc(std.percent));	//finding the equivalent gpa using gpa_calc
+	
+	//writing records into the file
+	fwrite(&std,sizeof(std),1,fp);
+	printf("\n\tRecord Successfully Stored!\n");
+	printf("\t_____________________________________\n");
 	fclose(fp);
+	
+	//if user wants to add more	
+	printf("\n\tDo you want to ADD more Record(y/n)? => ");
+	yesno = getche();
+	if(yesno == 'y' || yesno == 'Y')
+		add_record();
+	else
+		menu();
 }
 
 //display function
@@ -425,14 +430,9 @@ void delete_record()
 int counter()
 {
 	FILE *fp = fopen("student_record.txt","r");
-
-	student s1;
-	
 	fseek(fp,0,SEEK_END);
 	n  = ftell(fp)/sizeof(student);
-	
 	fclose(fp);
-	
 	return n;	
 }
 
@@ -451,7 +451,6 @@ int no_of_record()
 		system("cls");
 		menu();
 	}
-	student s1;
 	
 	fseek(fp,0,SEEK_END);
 	n  = ftell(fp)/sizeof(student);
@@ -776,6 +775,8 @@ int nameChecker(char name[20])
 //about myself
 void about()
 {
+	FILE *text = fopen("features.txt","r");
+	char ch;
 	system("cls");
 	line();
 	printf("\tABOUT\n");
@@ -783,9 +784,16 @@ void about()
 	
 	printf("\n\tThis Application is developed by Ankush Gautam.\n\n");
 	printf("\tI made this as a project work for C programming subject. This program is purely\n\tmade in DEV C++ ");
-	printf("so running in other IDE may result in bugs. This project would not \n\thave been possible without ");
-	printf("the help of my friends, Bhawesh sir and a bit of INTERNET.\n\n\tThis Application can store name,marks of students");
-	printf(" and calculate GPA. This app can\n\talso sort records according to the Name, Rollno and GPA.");
+	printf("so running in other IDE may result in bugs.\n\n\tThis Application can store name,marks of students");
+	printf(" and calculate GPA. This app can\n\talso sort records according to the Name, Rollno and GPA.\n\n");
+	
+	ch = fgetc(text);
+	while(ch != EOF)
+	{
+		printf("%c",ch);
+		ch = fgetc(text);
+	}
+	fclose(text);
 	printf("\n\n\tTHANK YOU!!\n\n\t");
 	system("pause");
 	system("cls");
