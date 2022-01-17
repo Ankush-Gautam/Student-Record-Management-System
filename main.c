@@ -1,800 +1,876 @@
 #include<stdio.h>
 #include<conio.h>
-#include<stdlib.h>
 #include<string.h>
-#include<time.h>
-#define subjects 5
-
-//global variables
-int n=0, record_count=0;
-char *subject[] = {"Maths","English","Digital Logic","Computer Concept","C Programming"};
+#include<stdlib.h>
+#define subs 5 // no of subjects
 
 //structure
-typedef struct{
-	int rollno;
-	char name[20];
-	float total;
+struct student{
+	int roll;
+	char name[24];
+	float marks[subs];
 	float percent;
-	char grade[3];
+	float total;
 	float gpa;
-	float marks[subjects];
-}student;
+	char grade[3];
+}std;
 
 //functions declaration
-void login_page();
 void menu();
 void add_record();
-void edit();
+void view_record();
+void edit_record();
+void search_record();
 void delete_record();
-void display();
-void search();
-int no_of_record();
-void sort_menu();
-void alphabetical_sort();
-void sort_by_rollno();
-void sort_by_gpa();
-//auxiliary functions
+void sort_record();
+int no_of_records();
 void about();
-void line();
+void sort_file();
+void misc();
+//helping funcs
+void login();
+void input_details();
+void title_banner(char*);
 char *grade_calc(float);
 int nameChecker(char*);
-int	counter(); 
-
-//main function
-int main()
-{
-	//font color
-	system("color 3");
-	
-//	login_page();	
-					/**comenting it out just for now 
-					and adding menu function to not
- 					login again and again**/	
-								
-	menu();	//temporary call to be removed if login_page is uncommented
-	
-	return 0;
+int rollChecker(int);
+//text color for designing
+void red () {
+  printf("\033[1;31m");	// changes text to red
+}
+void yellow() {
+  printf("\033[1;33m");
+}
+void reset() {
+  printf("\033[0m");
+}
+void green(){
+	printf("\033[0;32m");
+}
+void blue(){
+	printf("\033[0;34m");
+}
+void purple(){
+	printf("\033[0;35m");
+}
+void cyan(){
+	printf("\033[0;36m");
 }
 
-//line function
-void line()
-{
-	printf("------------------------------------------------------------------------------------------------\n");
+//global variables
+FILE *fp;
+int i,j;
+char subject[subs][20] = {"Maths","English","C Programming","Digital Logic","Computer Concept"};
+
+///main function
+void main(){
+	
+	menu();
+//	login();
 }
 
-//login page
-void login_page()
-{
-	char username[10], password[10], userid[] = "admin", passcode[] = "ag";
-	
-    tryagain: //if user name and password does not match
-    line();
-    printf("\tLOGIN\n");
-    line();
-    
-    fflush(stdin);
-    printf("\n\tEnter username : ");
-    scanf("%s",username);
-    printf("\tEnter password : ");
-	scanf("%s",password);
-	
-    if(strncmp(username,userid,10)==0 && strncmp(password,passcode,10)==0)	//strncmp helps to control buffer overflow , useful for security purpose
-    {
-    	system("cls");
-        menu();
-    }
-    else
-    {
-        printf("\n\tInvalid Login!\n\t");
-        system("pause");
-        system("cls");
-        goto tryagain;
-    }
-}
-
-//menu function
-void menu()
-{
+//menu to choose either to record, display , delete , edit etc. and also runs all funcs, so calling it in the main() is enough
+void menu(){
 	int choice;
-	time_t t;
-	time(&t);
-	system("cls");
+	
 	do{
-		line();
-		printf("\n\tWELCOME TO THE MAIN MENU\t\t\t\t%s\n",ctime(&t));
-		line();
-		printf("\n\t1.ADD RECORD");
-		printf("\n\t2.DISPLAY");
-		printf("\n\t3.EDIT");
-		printf("\n\t4.DELETE");
-		printf("\n\t5.NO OF RECORDS");
-		printf("\n\t6.SEARCH");
-		printf("\n\t7.SORT RECORDS");
-		printf("\n\t8.ABOUT");
-		printf("\n\t0.EXIT");
-		
-		printf("\n\n\tEnter your choice : ");
-		scanf("%d",&choice);
-		fflush(stdin);
-		
+		//for design purpose only
 		system("cls");
-		switch(choice)
-		{	
+		cyan();
+		for(i=0;i<120;i++)
+			printf("%c",206);		//178,219,176,206 looks good
+		red();
+		printf("\n\n\t\t\t\t\t  STUDENT RECORD MANGER\n\t\t\t\t\tWELCOME TO THE MAIN MENU\n\n");
+		cyan();
+		for(i=0;i<120;i++)
+			printf("%c",206);	//end of design
+		reset();
+		printf("\n\n\t1.ADD RECORD\n\t2.VIEW RECORD\n\t3.EDIT RECORD\n\t4.SEARCH RECORD\n\t5.DELETE RECORD\n\t6.SORT RECORDS");
+		printf("\n\t7.NO OF RECORDS\n\t8.ABOUT\n\t9.MISCELLANEOUS\n\t0.EXIT\n");
+		fflush(stdin);
+		yellow();
+		printf("\n\n\tEnter your choice:\n\t>> ");
+		scanf("%d",&choice);
+		reset();
+		switch(choice){
 			case 1:
 				add_record();
 				break;
 			case 2:
-				display();
+				view_record();
 				break;
 			case 3:
-				edit();
+				edit_record();
 				break;
 			case 4:
-				delete_record();
+				search_record();
 				break;
 			case 5:
-				no_of_record();
+				delete_record();
 				break;
 			case 6:
-				search();
+				sort_record();
 				break;
 			case 7:
-				sort_menu();
+				//since its short, so not declaring new function
+				title_banner("NO OF RECORDS");
+				printf("\n\n\tNO OF RECORDS = %d\n\n\t",no_of_records());
+				yellow();
+				system("pause");
 				break;
 			case 8:
 				about();
 				break;
+			case 9:
+				misc();
+				break;
+			case 0:
+				exit(0);
 		}
-		
-	}while(choice != 0);
-}
+	}while(choice!=0);
+}	//end of menu()
 
-//add student function
-void add_record()
-{
-	FILE *fp = fopen("student_record.txt","a+");
-	student std,temp;
+//to add record
+void add_record(){
+	title_banner("ADD RECORD");	//menu title	
 	
-	system("cls");
-	line();
-	printf("\tADD STUDENT RECORD MENU\n");
-	line();
+	FILE *fadd = fopen("record.txt","ab");	//opening file to add record
+	int n = no_of_records();
+	char yesno;
 	
-	int j; char yesno;
-	std.total = 0;std.percent = 0;
-	
-	printf("\tRecord No. %d",(counter()+1));
-	rollno:
-
-	printf("\n\tEnter Rollno : ");
-	scanf("%d",&std.rollno);
-		fflush(stdin);
-	//if user input strings or other data type
-	if(std.rollno <= 0)	// because if user input character in %d(integer data type), it returns 0
-	{
-		printf("\tInvalid Rollnumber!!\n");
-		goto rollno;		
-	}	
-	//checking if the rollno, user is trying already exists in the record
-	while(fread(&temp,sizeof(temp),1,fp))
-	{
-		if(std.rollno == temp.rollno)
-		{
-			printf("\tRollnumber already exists!");
-			goto rollno;
-		}
-	}
-	name:
-
-	printf("\tEnter FULL Name : ");
-	scanf("%[^\n]s",std.name);
-		fflush(stdin);
-	//if user inputs other than alphabets
-	if(nameChecker(std.name) == 1)
-	{
-		printf("\tInvalid Name! Please use Alphabets only\n");	//Sorry Elon Musk and son
-		goto name;
-	}
-	
-	for(j=0;j<subjects;j++)
-	{
-		enterMarks:		//if total exceeds the limit	
-		printf("\tEnter marks of %s: ",subject[j]);
-		scanf("%f",&std.marks[j]);
-		fflush(stdin);
-		//verifying if marks is not greater or less than it should be
-		if(std.marks[j] < 0 || std.marks[j] > 100)
-		{
-			printf("\n\tMarks cannot be Greater than 100 and Lesser than 0!!\n");
-			printf("\tEnter the Marks Again CAREFULLY.\n\n");
-			goto enterMarks;
-		}
-		std.total += std.marks[j];
-	}
-	std.percent = std.total/subjects;		//calculating percentage of student
-	std.gpa = std.percent/25;				//calculating gpa from percent
-	strcpy(std.grade,grade_calc(std.percent));	//finding the equivalent gpa using gpa_calc
-	
-	//writing records into the file
-	fwrite(&std,sizeof(std),1,fp);
-	printf("\n\tRecord Successfully Stored!\n");
-	printf("\t_____________________________________\n");
-	fclose(fp);
-	
-	//if user wants to add more	
-	printf("\n\tDo you want to ADD more Record(y/n)? => ");
-	yesno = getche();
+	//adding records using inputdetails() which asks info
+	green();
+	printf("\n\tRecord No. %d\n\t------------",n+1);
+	reset();
+	input_details();	
+	fwrite(&std,sizeof(std),1,fadd);
+	fclose(fadd);
+	green();
+	printf("\n\tRecord successfully stored!\n\t---------------------------\n");
+	reset();
+	//if user wants to add more record
+	yellow();
+	printf("\tDo you want to add more?(Press 'y' for Yes or 'n' for No)\n\t>> ");
+	scanf(" %c",&yesno);
+	reset();
 	if(yesno == 'y' || yesno == 'Y')
 		add_record();
 	else
 		menu();
-}
+}	//end of add record function
 
-//display function
-void display()
-{
-	line();
-	printf("\tDISPLAY MENU\n");
-	line();
-	
-	FILE *fp = fopen("student_record.txt","r");
-	if(fp == NULL)
-	{
-		printf("\n\tNo Record Found to Display!!\n\t");
+//to display the records
+void view_record(){
+	title_banner("VIEW RECORD");
+	int record_count = no_of_records();
+	fp = fopen("record.txt","rb");
+	//checking if the file has atleast one record,otherwise to print no record found
+	if(fp == NULL || record_count == 0){
+		red();
+		printf("\n\tNo Record Found!! Please ADD RECORD first.\n\n\t");
+		yellow();
 		system("pause");
-		system("cls");
 		menu();
 	}
-	student std;
-	int j;
-	char ch = fgetc(fp);
 	
-	if(ch != EOF)
-	{
-		rewind(fp);
-		printf("\n\tROLL\tNAME\t\t\tTOTAL\t\tPERCENT %%\tGPA\tGRADE\n");
-		line();
-		while(fread(&std,sizeof(student),1,fp))
-		{
-			printf("\t %d\t%-20s\t%.2f\t\t%.2f%%\t\t%.2f\t %s\n",std.rollno,std.name,std.total,std.percent,std.gpa,std.grade);
-		}	
+	//reading the file and displaying the content
+	green();
+	printf("\n\n\tROLL\t%-30sTOTAL\t\tPERCENT\t\tGPA\t\tGRADE\n","NAME");
+	printf("\t---------------------------------------------------------------------------------------------\n");reset();
+	while(fread(&std,sizeof(std),1,fp)){
+		printf("\t%02d\t%-30s%06.2f\t\t%6.2f %%\t%.2f\t\t %s\n",std.roll,std.name,std.total,std.percent,std.gpa,std.grade);
 	}
-	else	
-		printf("\n\tNo Data Found! ADD Data To Display.\n");
-	
-		
-	printf("\n\tPress any key to continue...");
-	getchar();
-	system("cls");
 	
 	fclose(fp);
-}
+	printf("\n\t");
+	yellow();
+	system("pause");
+}	//end of view records
 
-//edit function
-void edit()
-{
-	FILE *fp = fopen("student_record.txt","r");
-	if(fp == NULL)
-	{
-		printf("\n\tFile does not exist! Please record data first.\n\t");
-		system("pause");
-		system("cls");
-		menu();
-	}
-	FILE *fp1 = fopen("temp.txt","w");
-	student std;
-	int j,rno,found=0;
+//to edit/update records, first copying the records in a temp file and then recopying the temp file data into og file
+void edit_record(){
+	title_banner("EDIT RECORD");
+	int rollno;
+	int found = 0,record_count = no_of_records();
 	
-	line();
-	printf("\tEDIT MENU\n");
-	line();
-	
-	//display message if file is empty
-	if(counter(record_count) == 0)
-	{
-		printf("\n\tNo record found to EDIT!\n\t");
+	//creating a new temp file to store new updated data
+	FILE *tempfile = fopen("tempfile.txt","wb");
+	fp = fopen("record.txt","rb");
+	if(fp == NULL || record_count == 0){
+		red();
+		printf("\n\tFile doesn't exists!! Please ADD RECORD first\n\n\t");
+		yellow();
 		system("pause");
-		system("cls");
 		menu();
 	}
 	
-	//display the list of student so that user can see and choose the rollno to delete it
-	printf("\n\tROLL\tNAME\t\t\tTOTAL\t\tPERCENT %%\tGPA\tGRADE\n");
-	line();
-	while(fread(&std,sizeof(student),1,fp))
-	{
-		printf("\t %d\t%-20s\t%.2f\t\t%.2f%%\t\t%.2f\t %s\n",std.rollno,std.name,std.total,std.percent,std.gpa,std.grade);
+	//displaying the records, so that user can select which record to edit
+	green();
+	printf("\n\n\tROLL\t%-30sTOTAL\t\tPERCENT\t\tGPA\t\tGRADE\n","NAME");
+	printf("\t---------------------------------------------------------------------------------------------\n");reset();
+	while(fread(&std,sizeof(std),1,fp)){
+		printf("\t%02d\t%-30s%06.2f\t\t%6.2f %%\t%.2f\t\t %s\n",std.roll,std.name,std.total,std.percent,std.gpa,std.grade);
 	}
-	rewind(fp);	//moving cursor the the first line of the file to read 
+	rewind(fp); // to move the cursor at the start to read the file again
 	
-	printf("\n\n\tEnter the Rollno of student you want to EDIT: ");
-	scanf("%d",&rno);
 	fflush(stdin);
+	yellow();
+	printf("\n\n\tEnter the ROLLNUMBER of the Student you want to EDIT: ");
+	scanf("%d",&rollno);
+	reset();
 	
-	while(fread(&std,sizeof(student),1,fp))
-	{
-		if(std.rollno == rno)
-		{
-			found = 1;
-			printf("\n\tROLL\tNAME\t\t\tTOTAL\t\tPERCENT %%\tGPA\tGRADE\n");
-			printf("\t %d\t%-20s\t%.2f\t\t%.2f%%\t\t%.2f\t%s\n",std.rollno,std.name,std.total,std.percent,std.gpa,std.grade);
+	while(fread(&std,sizeof(std),1,fp)){
+		if(rollno == std.roll){
+			title_banner("EDIT RECORD");
 			
-			std.total = 0;
-			std.percent =0;
+			//displaying the match record first to make user clear
+			green();
+			printf("\n\n\tROLL\t%-30sTOTAL\t\tPERCENT\t\tGPA\t\tGRADE\n","NAME");
+			printf("\t---------------------------------------------------------------------------------------------\n");reset();
+			printf("\t%02d\t%-30s%06.2f\t\t%6.2f %%\t%.2f\t\t %s\n",std.roll,std.name,std.total,std.percent,std.gpa,std.grade);
 		
-			printf("\n\tEnter New Rollno : ");
-			scanf("%d",&std.rollno);
-			fflush(stdin);
-			printf("\tEnter New Name : ");
-			scanf("%[^\n]s",std.name);
+			//display the marks too for more detail view
+			green();
+			printf("\n\n\t%-25sMARKS\n","SUBJECT");
+			printf("\t------------------------------\n");reset();
+			for(j=0;j<subs;j++)
+				printf("\t%-25s%.2f\n",subject[j],std.marks[j]);
 			
-			for(j=0;j<subjects;j++)
-			{
+			green();
+			printf("\n\tEnter New Data\n\t--------------");
+			reset();
+
+			//input details	, i didn't use the existing inputdetails() coz it gives trouble during name & rollno Verifying time.
+			std.total = 0;
+			std.percent = 0;
+		
+			rollno_again:
 				fflush(stdin);
-				printf("\tEnter marks of %s : ",subject[j]);
-				scanf("%f",&std.marks[j]);
-				std.total += std.marks[j];
+				printf("\n\tEnter RollNo: ");
+				scanf("%d",&std.roll);
+				//checking if rollno is a natural number
+				if(std.roll <= 0){
+					red();
+					printf("\t(Invalid Rollnumber!!)");
+					reset();
+					goto rollno_again;
+				}
+				//checking if rollno already exists in the file
+				if((rollChecker(std.roll) == 1) && (std.roll!=rollno)){	//2nd condition coz user shud be able to enter the previous rollno of that student
+					red();
+					printf("\t(This Rollnumber already exists!!)");
+					reset();
+					goto rollno_again;
+				}
+			
+			name_again:
+				fflush(stdin);
+				printf("\tEnter FullName: ");
+				gets(std.name);
+				//if name includes characters other than alphabets
+				if(nameChecker(std.name) == 1){
+					red();
+					printf("\t(Invalid Name!! Please use Alphabets Only.)\n");
+					reset();
+					goto name_again;
+				}
+			
+			for(j=0;j<subs;j++)
+			{
+				again_marks:
+					fflush(stdin);
+					printf("\tEnter marks of %s: ",subject[j]);
+					scanf("%f",&std.marks[j]);
+					//checking for invalid input
+					if(std.marks[j] < 0 || std.marks[j] > 100){
+						red();
+						printf("\t(Marks cannot be lesser than 0 or greater than 100. Please enter again CAREFULLY!)\n");
+						reset();
+						goto again_marks;
+					}
+					std.total += std.marks[j];
 			}
-			std.percent = std.total/subjects;
+			std.percent= std.total/subs;
 			std.gpa = std.percent/25;
 			strcpy(std.grade,grade_calc(std.percent));
-			printf("\n\tRecord successfully Updated!\n\t");	
-		}	
-		
-		fwrite(&std,sizeof(student),1,fp1);	
-	}
-	fclose(fp);
-	fclose(fp1);
-	
-	if(found)
-	{
-		fp1 = fopen("temp.txt","r");
-		fp = fopen("student_record.txt","w");
-		
-		while(fread(&std,sizeof(student),1,fp1))
-		{
-			fwrite(&std,sizeof(student),1,fp);
-		}
-		
-		fclose(fp);
-		fclose(fp1);
-	}
-	else
-		printf("\n\tRecord Not Found.\n");
-		
-	printf("\n\t");
-	system("pause");
-	system("cls");	
-}
-
-//delete function
-void delete_record()
-{
-	FILE *fp = fopen("student_record.txt","r");
-	FILE *fp1 = fopen("temp.txt","w");
-	student std;
-	int j,rno,found=0;
-	
-	line();
-	printf("\tDELETE RECORD\n");
-	line();
-	
-	//display the list of student so that user can see and choose the rollno to delete it
-	printf("\n\tROLL\tNAME\t\t\tTOTAL\t\tPERCENT %%\tGPA\tGRADE\n");
-	line();
-	while(fread(&std,sizeof(student),1,fp))
-	{
-		printf("\t %d\t%-20s\t%.2f\t\t%.2f%%\t\t%.2f\t%s\n",std.rollno,std.name,std.total,std.percent,std.gpa,std.grade);
-	}
-	rewind(fp);	//moving cursor the the first line of the file to read 
-	
-	//asking for rollno
-	printf("\n\n\tEnter the Rollno of student you want to DELETE: ");
-	scanf("%d",&rno);
-	fflush(stdin);
-	
-	while(fread(&std,sizeof(student),1,fp))
-	{
-		if(std.rollno == rno)	
-		{
-			found = 1;	
-			printf("\n\tRecord Successfully Deleted!\n");	
-		}
-		else
-			fwrite(&std,sizeof(student),1,fp1);	
-	}
-	fclose(fp);
-	fclose(fp1);
-	
-	if(found)
-	{
-		fp1 = fopen("temp.txt","r");
-		fp = fopen("student_record.txt","w");
-		
-		while(fread(&std,sizeof(student),1,fp1))
-		{
-			fwrite(&std,sizeof(student),1,fp);
-		}
-		
-		fclose(fp);
-		fclose(fp1);
-	}
-	else
-		printf("\n\tRecord Not Found.\n");
-		
-	printf("\n\t");
-	system("pause");
-	system("cls");	
-}
-//	data counter
-int counter()
-{
-	FILE *fp = fopen("student_record.txt","r");
-	fseek(fp,0,SEEK_END);
-	n  = ftell(fp)/sizeof(student);
-	fclose(fp);
-	return n;	
-}
-
-// no of record function
-int no_of_record()
-{
-	line();
-    printf("\tNUMBER OF RECORDS\n");
-    line(); 
-    
-	FILE *fp = fopen("student_record.txt","r");
-	if(fp == NULL)
-	{
-		printf("\n\tFile does not exist!\n\t");
-		system("pause");
-		system("cls");
-		menu();
-	}
-	
-	fseek(fp,0,SEEK_END);
-	n  = ftell(fp)/sizeof(student);
-	printf("\n\tNo of Records = %d\n\n\t",n);
-		
-	system("pause");
-    system("cls");
-	fclose(fp);
-}
-
-//search record function
-void search()
-{
-	FILE *fp = fopen("student_record.txt","r");
-	student std;
-	int j,rno,found=0;
-	
-	line();
-	printf("\tSEARCH MENU\n");
-	line();
-	
-	printf("\tEnter the Rollno of student you want to search: ");
-	scanf("%d",&rno);
-	getchar();
-	
-	while(fread(&std,sizeof(student),1,fp))
-	{
-		if(std.rollno == rno)
-		{
+			
+			fwrite(&std,sizeof(std),1,tempfile);
 			found = 1;
-			printf("\n\tROLL\tNAME\t\t\tTOTAL\t\tPERCENT %%\tGPA\tGRADE\n");
-			line();
-			printf("\t %d\t%-20s\t%.2f\t\t%.2f%%\t\t%.2f\t %s\n",std.rollno,std.name,std.total,std.percent,std.gpa,std.grade);
-			printf("\n\n\n\t%-30s%-10s\n","SUBJECT","MARKS");
-			printf("\t-----------------------------------\n");
-			for(j=0;j<subjects;j++)
-			{
-				printf("\t%-30s%-10.2f\n",subject[j],std.marks[j]);
-			}
-		}	
-	}
-	if(!found)
-	{
-		printf("\n\tRecord not Found!!\n");
-	}
-	printf("\n\t");
-	system("pause");
-	system("cls");
-	
-	fclose(fp);
-}
-
-//grade calculator 
-char *grade_calc(float percent)
-{
-	char grade[3];
-	//calculating grade
-		if(percent >= 0 && percent < 20)
-			return strcpy(grade,"E");
-		else if(percent >= 20 && percent < 30)
-        	return strcpy(grade,"D");
-		else if(percent >= 30 && percent < 40)
-        	return strcpy(grade,"D+");
-		else if(percent >= 40 && percent < 50)
-        	return strcpy(grade,"C");
-   		else if(percent >= 50 && percent < 60)
-       		return strcpy(grade,"C+");
-    	else if(percent >= 60 && percent < 70)
-        	return strcpy(grade,"B");
-   		else if(percent >= 70 && percent < 80)
-        	return strcpy(grade,"B+");
-    	else if(percent >= 80 && percent < 90)
-        	return strcpy(grade,"A");
-    	else
-       		return strcpy(grade,"A+");
-}
-
-//sort function
-void sort_menu()
-{
-	int j,ch;
-	student std;
-	
-	FILE *fp = fopen("student_record.txt","r");
-	if(fp == NULL)
-	{
-		printf("\n\tNO RECORD FOUND TO SORT!!\n\t");
-		system("pause");
-		system("cls");
-		menu();
-	}
-	
-	do{
-		system("cls");
-		line();
-		printf("\tSORT RECORDS MENU\n");
-		line();
-		
-		//display message if file is empty
-		if(counter(record_count) == 0)
-		{
-			printf("\n\tNo record found to SORT! Please ADD Records.\n\t");
-			system("pause");
-			system("cls");
-			menu();
-		}
-		printf("\n\t1.Sort By Name");
-		printf("\n\t2.Sort By RollNo.");
-		printf("\n\t3.Sort By GPA");
-		printf("\n\t0.Back to Menu");
-		
-		printf("\n\n\tEnter your choice: ");
-		scanf("%d",&ch);
-		getchar();
-		
-		switch(ch)
-		{
-			case 1:
-				alphabetical_sort();
-				break;
-			case 2:
-				sort_by_rollno();
-				break;
-			case 3:
-				sort_by_gpa();
-				break;
-		}
-		
-	}while(ch != 0);
-		
-	printf("\n\t");
-	system("cls");
-	
-	fclose(fp);
-}
-
-//sorting array of structure Alphabetical
-void alphabetical_sort()
-{
-	system("cls");
-	line();
-	printf("\tARRANGING STUDENTS RECORD IN ALPHABETICAL ORDER\n");
-	line();
-	
-	student *s, std;
-	int i,j,n;
-	FILE *fp = fopen("student_record.txt","r");
-	if(fp == NULL)
-	{
-		printf("\n\tFiles cannot be Opened!\n");
-		system("pause");
-		system("cls");
-		menu();
-	}
-	
-	//calculating number of records in the file
-	fseek(fp,0,SEEK_END);
-	n = ftell(fp)/sizeof(student);
-	s = (student*)calloc(n,sizeof(student));
-	
-	rewind(fp);
-	
-	//reading data into s[i]
-	for(i=0;i<n;i++)
-	{
-		fread(&s[i],sizeof(student),1,fp);
-	}
-	
-	//comparing and arranging the records in alphabetical order
-	for(i=0;i<n;i++)
-	{
-		for(j=i+1;j<n;j++)
-		{
-			if(strcmp(s[i].name,s[j].name)>0)
-			{
-				std = s[i] ;
-				s[i] = s[j];
-				s[j] = std;
-			}
-		}
-	}
-	
-	//printing sorted data
-	printf("\n\tROLL\tNAME\t\t\tTOTAL\t\tPERCENT %%\tGPA\tGRADE\n");
-	line();
-	for(i=0;i<n;i++)
-	{
-		printf("\t %d\t%-20s\t%.2f\t\t%.2f%%\t\t%.2f\t%s\n",s[i].rollno,s[i].name,s[i].total,s[i].percent,s[i].gpa,s[i].grade);
-	}
-	
-	printf("\n\n\t");
-	system("pause");
-}
-
-void sort_by_rollno()
-{
-	system("cls");
-	line();
-	printf("\tARRANGING STUDENTS RECORD BY ROLL NUMBER\n");
-	line();
-	
-	student *s, std;
-	int i,j,n;
-	FILE *fp = fopen("student_record.txt","r");
-	if(fp == NULL)
-	{
-		printf("\n\tFiles cannot be Opened!\n");
-		system("pause");
-		system("cls");
-		menu();
-	}
-	
-	//calculating number of records in the file
-	fseek(fp,0,SEEK_END);
-	n = ftell(fp)/sizeof(student);
-	s = (student*)calloc(n,sizeof(student));
-	
-	rewind(fp);
-	
-	//reading data into s[i]
-	for(i=0;i<n;i++)
-	{
-		fread(&s[i],sizeof(student),1,fp);
-	}
-	
-	//comparing and arranging the records by rollno
-	for(i=0;i<n;i++)
-	{
-		for(j=i+1;j<n;j++)
-		{
-			if(s[i].rollno > s[j].rollno)
-			{
-				std = s[i];
-				s[i] = s[j];
-				s[j] = std;
-			}
-		}
-	}
-	
-	//printing sorted data
-	printf("\n\tROLL\tNAME\t\t\tTOTAL\t\tPERCENT %%\tGPA\tGRADE\n");
-	line();
-	for(i=0;i<n;i++)
-	{
-		printf("\t %d\t%-20s\t%.2f\t\t%.2f%%\t\t%.2f\t%s\n",s[i].rollno,s[i].name,s[i].total,s[i].percent,s[i].gpa,s[i].grade);
-	}
-	
-	printf("\n\n\t");
-	system("pause");
-}
-
-void sort_by_gpa()
-{
-	system("cls");
-	line();
-	printf("\tARRANGING STUDENTS RECORD BY GPA\n");
-	line();
-	
-	student *s, std;
-	int i,j,n;
-	FILE *fp = fopen("student_record.txt","r");
-	if(fp == NULL)
-	{
-		printf("\n\tFiles cannot be Opened!\n");
-		system("pause");
-		system("cls");
-		menu();
-	}
-	
-	//calculating number of records in the file
-	fseek(fp,0,SEEK_END);
-	n = ftell(fp)/sizeof(student);
-	s = (student*)calloc(n,sizeof(student));
-	
-	rewind(fp);
-	
-	//reading data into s[i]
-	for(i=0;i<n;i++)
-	{
-		fread(&s[i],sizeof(student),1,fp);
-	}
-	
-	//comparing and arranging the records by gpa
-	for(i=0;i<n;i++)
-	{
-		for(j=i+1;j<n;j++)
-		{
-			if(s[i].gpa < s[j].gpa)
-			{
-				std = s[i];
-				s[i] = s[j];
-				s[j] = std;
-			}
-		}
-	}
-	
-	//printing sorted data
-	printf("\n\tROLL\tNAME\t\t\tTOTAL\t\tPERCENT %%\tGPA\tGRADE\n");
-	line();
-	for(i=0;i<n;i++)
-	{
-		printf("\t %d\t%-20s\t%.2f\t\t%.2f%%\t\t%.2f\t%s\n",s[i].rollno,s[i].name,s[i].total,s[i].percent,s[i].gpa,s[i].grade);
-	}
-	
-	printf("\n\n\t");
-	system("pause");
-}
-
-//nameChecker , checks if the user input character only or not(Alphabets only)
-int nameChecker(char name[20])
-{
-	int i=0;
-	
-	while(name[i]!= '\0')
-	{
-		if((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= 'A' && name[i] <= 'Z'))
-			return 0;
+		}	//end of if(rollno == std.roll)
 		else
-			return 1;
+			fwrite(&std,sizeof(std),1,tempfile);
 	}
-}
-//about myself
-void about()
-{
-	FILE *text = fopen("features.txt","r");
+	fclose(fp);
+	fclose(tempfile);
+	
+//	remove("record.txt");
+//	rename("tempfile.txt","record.txt");
+	//copying all the data from the tempfile to the main file coz rename&remove not working
+	if(found){
+		fp = fopen("record.txt","wb");
+		tempfile = fopen("tempfile.txt","rb");
+		
+		while(fread(&std,sizeof(std),1,tempfile)){
+			fwrite(&std,sizeof(std),1,fp);
+		}
+		fclose(fp);
+		fclose(tempfile);
+		green();
+		printf("\n\tRecord Updated Successfully!\n\t-----------------------------");
+		reset();
+	}	
+	else{
+		red();
+		printf("\n\tNo Match Found!!\n\t----------------");
+		reset();
+	}
+		
+	printf("\n\t");
+	yellow();
+	system("pause");
+}	//end of edit record
+
+//to search and display the individual search record
+void search_record(){
+	title_banner("SEARCH RECORD");
+	char name[24];
+	int found=0;
+	int n = no_of_records();
+
+	//opening the file to read data and search
+	fp = fopen("record.txt","rb");
+	if(fp == NULL || n == 0){
+		red();
+		printf("\n\tFile doesn't exists!! Please ADD RECORD first.\n\n\t");
+		yellow();
+		system("pause");
+		menu();
+	}
+	yellow();
+	fflush(stdin);
+	printf("\n\n\tEnter the NAME of the Student: ");
+	gets(name);
+	reset();
+	//reading the file and display the result with is equal to the entered array
+	while(fread(&std,sizeof(std),1,fp)){
+		if(strcmp(name,std.name)==0){
+			found = 1;
+			green();
+			printf("\n\n\tROLL\t%-30sTOTAL\t\tPERCENT\t\tGPA\t\tGRADE\n","NAME");
+			printf("\t---------------------------------------------------------------------------------------------\n");reset();
+			printf("\t%02d\t%-30s%06.2f\t\t%6.2f %%\t%.2f\t\t %s\n",std.roll,std.name,std.total,std.percent,std.gpa,std.grade);
+			
+			//display the marks too in the search for more detail view
+			green();
+			printf("\n\n\t%-25sMARKS\n","SUBJECT");
+			printf("\t-------------------------------\n");reset();
+			for(j=0;j<subs;j++){
+				printf("\t%-25s%6.2f\n",subject[j],std.marks[j]);
+			}
+		}
+	}
+	if(!found){
+		red();
+		printf("\n\tNo Match Found!!\n\t----------------");
+		reset();
+	}
+	printf("\n\t");
+	yellow();
+	system("pause");
+}	//end of search record()
+
+//to delete the individual record
+void delete_record(){
+	title_banner("DELETE RECORD");
+	int rollno;
+	char yesno;
+	int found = 0, record_count= no_of_records();
+	//creating a new temp file to store new updated data
+	FILE *tempfile = fopen("tempfile.txt","wb");
+	fp = fopen("record.txt","rb");
+	if(fp == NULL || record_count == 0){
+		red();
+		printf("\n\tFile doesn't exists!! Please ADD RECORD first.\n\n\t");
+		yellow();
+		system("pause");
+		menu();
+	}
+	
+	//displaying the records, so that user can select which record to delete
+	green();
+	printf("\n\n\tROLL\t%-30sTOTAL\t\tPERCENT\t\tGPA\t\tGRADE\n","NAME");
+	printf("\t---------------------------------------------------------------------------------------------\n");reset();
+	while(fread(&std,sizeof(std),1,fp)){
+		printf("\t%02d\t%-30s%06.2f\t\t%6.2f %%\t%.2f\t\t %s\n",std.roll,std.name,std.total,std.percent,std.gpa,std.grade);
+	}
+	rewind(fp); // to move the cursor at the start to read the file again
+	
+	fflush(stdin);
+	yellow();
+	printf("\n\n\tEnter the ROLLNUMBER of the Student you want to DELETE: ");
+	scanf("%d",&rollno);
+	reset();
+	
+	while(fread(&std,sizeof(std),1,fp)){
+		if(rollno == std.roll)
+			found = 1;
+		else
+			fwrite(&std,sizeof(std),1,tempfile);
+	}
+	fclose(fp);
+	fclose(tempfile);
+	
+//	remove("record.txt");
+//	rename("tempfile.txt","record.txt");
+	//copying all the data from the tempfile to the main file coz rename&remove not working
+	if(found){
+		fp = fopen("record.txt","wb");
+		tempfile = fopen("tempfile.txt","rb");
+		
+		while(fread(&std,sizeof(std),1,tempfile)){
+		fwrite(&std,sizeof(std),1,fp);
+		}
+		fclose(fp);
+		fclose(tempfile);
+		green();
+		printf("\n\tRecord DELETED Successfully!");
+		printf("\n\t-----------------------------\n\n");
+		reset();
+	}
+	else{
+		red();
+		printf("\n\tNo Match Found!!\n\t----------------\n");
+		reset();
+	}
+	//if user wants to delete more record
+	yellow();
+	printf("\tDo you want to DELETE Again?(Press 'y' for Yes or 'n' for No)\n\t>> ");
+	scanf(" %c",&yesno);
+	reset();
+	if(yesno == 'y' || yesno == 'Y')
+		delete_record();
+	else
+		menu();			
+}	//end of delete record()
+
+//to sort records according to name or rollno or grade
+void sort_record(){
+	title_banner("SORT RECORDS");
+	
+	int choice;	
+	struct student *s,temp;
+	int n = no_of_records();	//getting no of records
+	
+	//opening file to read the data
+	fp = fopen("record.txt","rb");
+	if(fp == NULL || n == 0){
+		red();
+		printf("\n\tFile doesn't exists!! Please ADD RECORD first.\n\n\t");
+	yellow();
+		system("pause");
+		menu();
+	}
+	
+	//allocating memory for struct s and storing file records in s[] as array
+	s = (struct student*) calloc(n,sizeof(struct student));
+	for(i=0;i<n;i++){
+		fread(&s[i],sizeof(struct student),1,fp);
+	}
+	
+	//sort menu to choose either to arrange acc. to rollno, name or gpa
+	printf("\n\t1.Sort by Name\n\t2.Sort by Rollno\n\t3.Sort by GPA\n\t4.Sort By SerialNo.\n\t0.Back to Menu\n");
+	yellow();
+	printf("\n\tEnter a choice:\n\t>> ");
+	scanf("%d",&choice);
+	reset();
+	
+	if(choice == 1){
+		title_banner("SORTING BY NAME");
+		//sorting according to alphabetical order
+		for(i=0;i<n;i++)
+			for(j=i+1;j<n;j++){
+				if(strcmp(s[i].name,s[j].name)>0){
+					temp = s[i];
+					s[i] = s[j];
+					s[j] = temp;
+				}	
+			}	//j forloop
+	}//close
+	else if(choice == 2){
+		title_banner("SORTING BY ROLLNO");
+		//sorting according to rollno of students
+		for(i=0;i<n;i++)
+			for(j=i+1;j<n;j++){
+				if(s[i].roll > s[j].roll){
+					temp = s[i];
+					s[i] = s[j];
+					s[j] = temp;
+				}	
+			}	//j forloop
+	}//close
+	else if(choice == 3){
+		title_banner("SORTING BY GPA");
+		//sorting according to gpa
+		for(i=0;i<n;i++)
+			for(j=i+1;j<n;j++){
+				if(s[i].gpa < s[j].gpa){
+					temp = s[i];
+					s[i] = s[j];
+					s[j] = temp;
+				}	
+			}	//j forloop
+	}
+	else if(choice == 4){
+		title_banner("SORTING BY SERIALNO.");
+		//sorting according to alphabetical order and giving serial number
+		for(i=0;i<n;i++)
+			for(j=i+1;j<n;j++){
+				if(strcmp(s[i].name,s[j].name)>0){
+					temp = s[i];
+					s[i] = s[j];
+					s[j] = temp;
+				}	
+			}	//j forloop
+			green();
+			printf("\n\n\tSN.\t%-30sTOTAL\t\tPERCENT\t\tGPA\tGRADE\n","NAME");
+			printf("\t-------------------------------------------------------------------------------------\n");reset();
+			for(i=0;i<n;i++){
+				printf("\t%02d\t%-30s%06.2f\t\t%5.2f %%\t\t%.2f\t  %s\n",i+1,s[i].name,s[i].total,s[i].percent,s[i].gpa,s[i].grade);
+			}
+		yellow();
+		printf("\n\t");
+		system("pause");
+		menu();
+	}
+	else
+		menu();
+		
+	//displaying the sorted record
+	green();
+	printf("\n\n\tROLL\t%-30sTOTAL\t\tPERCENT\t\tGPA\tGRADE\n","NAME");
+	printf("\t-------------------------------------------------------------------------------------\n");reset();
+	for(i=0;i<n;i++){
+		printf("\t%02d\t%-30s%06.2f\t\t%5.2f %%\t\t%.2f\t  %s\n",s[i].roll,s[i].name,s[i].total,s[i].percent,s[i].gpa,s[i].grade);
+	}
+		
+	printf("\n\n\t");
+	yellow();
+	system("pause");
+}	//end of sort_records()
+
+//to make user input details, just declaring a seperate func , maybe used multiple times so
+void input_details(){
+	std.total = 0;
+	std.percent = 0;
+
+	rollno_again:
+		fflush(stdin);
+		printf("\n\tEnter RollNo: ");
+		scanf("%d",&std.roll);
+		//checking if rollno is a natural number
+		if(std.roll <= 0){
+			red();
+			printf("\t(Invalid Rollnumber!!)");
+			reset();
+			goto rollno_again;
+		}
+		//checking if rollno already exists in the file
+		if((rollChecker(std.roll)) == 1){
+			red();
+			printf("\t(This Rollnumber already exists!!)");
+			reset();
+			goto rollno_again;
+		}
+	
+	name_again:
+		fflush(stdin);
+		printf("\tEnter FullName: ");
+		gets(std.name);
+		//if name includes characters other than alphabets
+		if(nameChecker(std.name) == 1){
+			red();
+			printf("\t(Invalid Name!! Please use Alphabets Only.)\n");
+			reset();
+			goto name_again;
+		}
+		else if(nameChecker(std.name) == 2){
+			red();
+			printf("\t(This Name already exists!!)\n");
+			reset();
+			goto name_again;
+		}
+	
+	for(j=0;j<subs;j++)
+	{
+		again_marks:
+			fflush(stdin);
+			printf("\tEnter marks of %s: ",subject[j]);
+			scanf("%f",&std.marks[j]);
+			//checking for invalid input
+			if(std.marks[j] < 0 || std.marks[j] > 100){
+				red();
+				printf("\t(Marks cannot be lesser than 0 or greater than 100. Please enter again CAREFULLY!)\n");
+				reset();
+				goto again_marks;
+			}
+			std.total += std.marks[j];
+	}
+	std.percent= std.total/subs;
+	std.gpa = std.percent/25;
+	strcpy(std.grade,grade_calc(std.percent));
+}	//end of input_details()
+
+//about me and the program
+void about(){
+	title_banner("ABOUT");
+	
 	char ch;
-	system("cls");
-	line();
-	printf("\tABOUT\n");
-	line();
-	
-	printf("\n\tThis Application is developed by Ankush Gautam.\n\n");
-	printf("\tI made this as a project work for C programming subject. This program is purely\n\tmade in DEV C++ ");
-	printf("so running in other IDE may result in bugs.\n\n\tThis Application can store name,marks of students");
-	printf(" and calculate GPA. This app can\n\talso sort records according to the Name, Rollno and GPA.\n\n");
-	
-	ch = fgetc(text);
-	while(ch != EOF)
+	//Opening the about file cause everything is written in that file
+	FILE *aboutfp = fopen("about.txt","rb");
+	if(aboutfp == NULL){
+		red();
+		printf("\n\tSorry! The file doesn't exists!!\n");
+		reset();
+	}
+
+	//the texts are written directly in the file
+	green();
+	while((ch=fgetc(aboutfp)) != EOF)
 	{
 		printf("%c",ch);
-		ch = fgetc(text);
 	}
-	fclose(text);
-	printf("\n\n\tTHANK YOU!!\n\n\t");
+	fclose(aboutfp);
+	printf("\n\n\t");
+	yellow();
 	system("pause");
-	system("cls");
+}
+//acts as a title bar and to reduce redundancy ,'cause i gave headings to all the defined-funcs
+void title_banner(char *title){
+	//for design purpose only
+		system("cls");
+		cyan();
+		for(i=0;i<120;i++)
+			printf("%c",247);		//178,219,176,206 looks good
+		red();
+		printf("\n\t\t\t\t\t\t%s\n",title);
+		cyan();
+		for(i=0;i<120;i++)
+			printf("%c",247);	
+		reset();
+		printf("\n");//end of design
+}	//end of titlebanner()
+
+//grade calculator to find the equivalent grade (like 90% above = A+)
+char *grade_calc(float percent){
+	if(percent >= 90)
+		return "A+";
+	else if(percent >= 80 && percent < 90)
+		return "A";
+	else if(percent >= 70 && percent < 80)
+		return "B+";
+	else if(percent >= 60 && percent < 70)
+		return "B";
+	else if(percent >= 50 && percent < 60)
+		return "C+";
+	else if(percent >= 40 && percent < 50)
+		return "C";
+	else if(percent >= 20 && percent < 40)
+		return "D";
+	else
+		return "E";
+}	//end of grade calc()
+
+// to know the number of records in the file and also returning it sothat it can be used in other funcs to display "NO record found" instead of leaving it blank
+int no_of_records(){
+	int n;
+	fp = fopen("record.txt","rb");
+	if(fp == NULL){
+		red();
+		printf("\n\tFile doesn't exists!! Please ADD RECORD first.\n\n\t");
+		yellow();
+		system("pause");
+		menu();
+	}
+	
+	fseek(fp,0,SEEK_END); //moving cursor to last position for total length/size 
+	n = ftell(fp)/sizeof(std);	// since ftell gives the size of file and std gives size of each record. so the division gives no of records
+	
+	fclose(fp);
+	return n;	//returning no of records
+}	// end of noofrecords()
+
+//just to verify if the name contains Alphabets only, coz C reads all the characters as CHARACTERS
+int nameChecker(char *name){
+	int flag=0;
+	FILE *namefp = fopen("record.txt","r");
+	struct student temp;
+	
+	//also checking if the name exists in the file
+	while(fread(&temp,sizeof(struct student),1,namefp)){
+		if(strcmp(temp.name,name)==0){
+			fclose(namefp);
+			return 2;
+		}
+	}
+	for(i=0;name[i]!='\0';i++){
+		if((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= 'A' && name[i] <= 'Z'))	//sorry elon musk and sons
+			flag = 0;
+		else
+			flag = 1;
+	}
+
+	return flag;
+}	//end of nameChecker()
+
+//to check if the rollno already exists in the main file
+int rollChecker(int roll){
+	FILE *rollfp = fopen("record.txt","r");
+	struct student temp;
+	
+	while(fread(&temp,sizeof(struct student),1,rollfp)){
+		if(roll == temp.roll){
+			fclose(rollfp);
+			return 1;
+		}
+	}
+}	//end of rollChecker()
+
+//login page
+void login(){	
+	title_banner("LOGIN PAGE");
+	
+	char username[] = "admin" , password[] = "password";
+	char userinput[10], pass[10];
+		
+	fflush(stdin);
+	printf("\n\n\tEnter Username: ");
+	gets(userinput);
+	fflush(stdin);
+	printf("\tEnter Password: ");
+	gets(pass);
+	
+	if(strcmp(username,userinput)==0 && strcmp(password,pass)==0){
+		menu();
+	}
+	else{
+		red();
+		printf("\n\tInvalid Username or password!! (Hint: admin & password)\n\t");
+		printf("-----------------------------\n\t");
+		yellow();
+		system("pause");
+		login();
+	}	
+}
+
+void sort_file(){
+	title_banner("SORTING RECORDS INSIDE THE FILE");
+	int n = no_of_records();	//getting no of records
+	int choice;
+	fp = fopen("record.txt","rb");
+	if(fp == NULL || n == 0){
+		red();
+		printf("\n\tFile doesn't exists!! Please ADD RECORD first.\n\n\t");
+		yellow();
+		system("pause");
+		menu();
+	}
+	struct student *s,temp;
+	
+	//allocating memory for struct s and storing file records in s[] as array
+	s = (struct student*) calloc(n,sizeof(struct student));
+	for(i=0;i<n;i++){
+		fread(&s[i],sizeof(struct student),1,fp);
+	}
+	fclose(fp);
+	//sort menu to choose either to arrange acc. to rollno, name or gpa
+	printf("\n\t1.Sort by Name\n\t2.Sort by Rollno\n\t3.Sort by GPA\n\t0.Back to Menu\n");
+	yellow();
+	printf("\n\tEnter a choice:\n\t>> ");
+	scanf("%d",&choice);
+	reset();
+	
+	if(choice == 1){
+		//sorting according to alphabetical order
+		for(i=0;i<n;i++)
+			for(j=i+1;j<n;j++){
+				if(strcmp(s[i].name,s[j].name)>0){
+					temp = s[i];
+					s[i] = s[j];
+					s[j] = temp;
+				}	
+			}	//j forloop
+	}//close
+	else if(choice == 2){
+		//sorting according to rollno of students
+		for(i=0;i<n;i++)
+			for(j=i+1;j<n;j++){
+				if(s[i].roll > s[j].roll){
+					temp = s[i];
+					s[i] = s[j];
+					s[j] = temp;
+				}	
+			}	//j forloop
+	}//close
+	else if(choice == 3){
+		//sorting according to gpa
+		for(i=0;i<n;i++)
+			for(j=i+1;j<n;j++){
+				if(s[i].gpa < s[j].gpa){
+					temp = s[i];
+					s[i] = s[j];
+					s[j] = temp;
+				}	
+			}	//j forloop
+	}
+	else
+		menu();
+		
+	fp = fopen("record.txt","wb");
+	for(i=0;i<n;i++){
+		fwrite(&s[i],sizeof(struct student),1,fp);
+	}
+	fclose(fp);
+	green();
+	printf("\n\tFILE SUCCESSFULLY REARRANGED!\n\n\t");
+	yellow();
+	system("pause");
+}
+
+void misc(){
+	int choice;
+	char yesno;
+	do{
+		title_banner("MISCELLANEOUS");
+		printf("\n\t1.DELETE ALL RECORDS AT ONCE\n\t2.ARRANGE RECORDS (IN FILE)\n\t0.Back to Menu\n");
+		
+		yellow();
+		printf("\n\tEnter a choice:\n\t>> ");
+		scanf("%d",&choice);
+		reset();
+		
+		switch(choice){
+			case 1:
+				red();
+				printf("\n\tDo you really want to DELETE ALL THE RECORDS?(y/n)\n\t>> ");
+				scanf(" %c",&yesno);
+				
+				if(yesno == 'y' || yesno == 'Y'){
+					remove("record.txt");
+					green();
+					printf("\n\tRecord Deleted Successfully!\n\n\t");
+				}
+				else{
+					green();
+					printf("\n\tNot Doing Anything to your precious DATA.\n");
+				}
+				printf("\n\t");	
+				yellow();
+				system("pause");
+				break;
+				
+			case 2:
+				sort_file();
+				break;
+		}//switch
+	}while(choice!=0);
 }
