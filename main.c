@@ -1,7 +1,7 @@
 /************************************************************************************
  *	STUDENT RECORD MANAGEMENT SYSTEM												*
  *	It can add, edit, store, delete, sort details of students.						*
- *	Developed by: Ankush Gautam					*
+ *	Developed by: Ankush Gautam														*
  ************************************************************************************/
 
 //header files
@@ -17,18 +17,18 @@ int i, j;
 //structure for setup and saving password and theme details
 struct setup
 {
-	char schoolname[30];
-	char address[30];
-	char programme[50];
+	char schoolname[33];
+	char address[33];
+	char programme[33];
 	int semester;
 	int subs;
-	char subject[10][30];
+	char subject[10][25];
 
 	struct settings
 	{
-		char username[10];
-		char password[10];
-		char defaultcolor[12];
+		char username[11];
+		char password[11];
+		char defaultcolor[11];
 	} settings;
 } setup;
 
@@ -36,10 +36,9 @@ struct setup
 struct student
 {
 	//personal
-	char name[24];
-	char address[40];
-	char phone[15]; // not using long int for phonenumber because of 0 and + in international numbers
-
+	char name[25];
+	char address[33];
+	char phone[11]; 
 	//academic
 	int roll;
 	float marks[10];
@@ -121,17 +120,22 @@ void menu()
 	int choice;
 	do
 	{
-		//for design purpose only
-		system("cls");
-		blue();
-		printf("\n\tSTUDENTS RECORD MANAGER\n\n");
-		for (i = 0; i < 156; i++)
-			printf("%c", 219); //end of design //178,219,176,206 looks good
-		reset();
+		//header of the App
+		header("STUDENT RECORD MANAGER");
 
-		printf("\n\n\n\tWELCOME TO THE MAIN MENU\n\t------------------------");
-		printf("\n\n\t1.ADD RECORD\n\t2.VIEW RECORD\n\t3.EDIT RECORD\n\t4.SEARCH RECORD\n\t5.DELETE RECORD\n\t6.SORT RECORDS");
-		printf("\n\t7.NO OF RECORDS\n\t8.GRADE-SHEET\n\t9.SETTINGS\n\t0.EXIT\n");
+		printf("\n\n\n\tWELCOME TO THE MAIN MENU\n\t------------------------\n");
+
+		printf("\n\t1.ADD RECORD");
+		printf("\n\t2.VIEW RECORD");
+		printf("\n\t3.EDIT RECORD");
+		printf("\n\t4.SEARCH RECORD");
+		printf("\n\t5.DELETE RECORD");
+		printf("\n\t6.SORT RECORDS");
+		printf("\n\t7.NO OF RECORDS");
+		printf("\n\t8.GRADE-SHEET");
+		printf("\n\t9.SETTINGS");
+		printf("\n\t0.EXIT\n");
+		
 		fflush(stdin);
 
 		green();
