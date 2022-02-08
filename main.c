@@ -10,10 +10,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// global variables
-FILE *fp;
-int i, j;
-
 // structure for another exam
 struct newSetup
 {
@@ -25,7 +21,7 @@ struct newSetup
 } newExam;
 
 // structure for setup and saving password and theme details
-struct setup
+struct setups
 {
 	char schoolname[33];
 	char address[33];
@@ -39,7 +35,7 @@ struct setup
 		char username[11];
 		char password[11];
 		char defaultcolor[11];
-	} settings;
+	} setting;
 } setup;
 
 // structure to define student
@@ -73,6 +69,7 @@ void misc(); // settings
 void sort_file();
 void login();
 void about();
+void addAnotherSetup();
 
 // color codes made functions
 void black();
@@ -111,7 +108,7 @@ void main()
 		firstsetup();
 	}
 
-	fread(&setup, sizeof(struct setup), 1, fsetup);
+	fread(&setup, sizeof(struct setups), 1, fsetup);
 	fclose(fsetup);
 
 	if (setup.subs <= 0)
@@ -237,7 +234,7 @@ subs_again:
 		goto subs_again;
 	}
 	printf("\n");
-	for (i = 0; i < setup.subs; i++)
+	for (int i = 0; i < setup.subs; i++)
 	{
 		fflush(stdin);
 		printf("\tEnter Name of subject %d: ", i + 1);
@@ -248,15 +245,15 @@ subs_again:
 	printf("\n\tSIGN UP\n\t---------\n");
 	reset();
 	printf("\tEnter Username: ");
-	scanf(" %10[^\n]", setup.settings.username);
+	scanf(" %10[^\n]", setup.setting.username);
 new_pw_again:
 	printf("\tEnter Password: ");
-	scanf(" %10[^\n]", setup.settings.password);
+	scanf(" %10[^\n]", setup.setting.password);
 	printf("\tConfirm Password: ");
 	scanf(" %10[^\n]", verifypw);
 
 	// checking if both password matches
-	if (strcmp(verifypw, setup.settings.password) != 0)
+	if (strcmp(verifypw, setup.setting.password) != 0)
 	{
 		red();
 		printf("\t(Password doesn't match! Re-enter password.)\n");
@@ -269,7 +266,7 @@ new_pw_again:
 
 	purple();
 	system("pause");
-	fwrite(&setup, sizeof(struct setup), 1, fsetup);
+	fwrite(&setup, sizeof(struct setups), 1, fsetup);
 	fclose(fsetup);
 
 	menu();
@@ -312,7 +309,7 @@ void view_record()
 	header("VIEW RECORD");
 
 	int record_count = no_of_records();
-	fp = fopen("record.dat", "rb");
+	FILE *fp = fopen("record.dat", "rb");
 	// checking if the file has atleast one record,otherwise to print no record found
 	if (fp == NULL || record_count == 0)
 	{
@@ -347,7 +344,7 @@ void edit_record()
 
 	// creating a new temp file to store new updated data
 	FILE *tempfile = fopen("tempfile.dat", "wb");
-	fp = fopen("record.dat", "rb");
+	FILE *fp = fopen("record.dat", "rb");
 	if (fp == NULL || record_count == 0)
 	{
 		red();
@@ -386,7 +383,7 @@ void edit_record()
 			// display the marks too for more detail view
 			printf("\n\n\t%-25sMARKS\n", "SUBJECT");
 			printf("\t------------------------------\n");
-			for (j = 0; j < setup.subs; j++)
+			for (int j = 0; j < setup.subs; j++)
 				printf("\t%-25s%.2f\n", setup.subject[j], std.marks[j]);
 
 			green();
@@ -441,7 +438,7 @@ void edit_record()
 				goto rollno_again;
 			}
 
-			for (j = 0; j < setup.subs; j++)
+			for (int j = 0; j < setup.subs; j++)
 			{
 			again_marks:
 				fflush(stdin);
@@ -451,7 +448,7 @@ void edit_record()
 				if (std.marks[j] < 0 || std.marks[j] > 100)
 				{
 					red();
-					printf("\t(Marks cannot be lesser than 0 or greater than 100. Please enter again CAREFULLY!)\n");
+					printf("\t(Marks cannot be less than 0 or greater than 100!)\n");
 					reset();
 					goto again_marks;
 				}
@@ -461,11 +458,11 @@ void edit_record()
 			std.gpa = std.percent / 25;
 			strcpy(std.grade, grade_calc(std.percent));
 
-			fwrite(&std, sizeof(std), 1, tempfile);
+			fwrite(&std, sizeof(struct student), 1, tempfile);
 			found = 1;
 		} // end of if(rollno == std.roll)
 		else
-			fwrite(&std, sizeof(std), 1, tempfile);
+			fwrite(&std, sizeof(struct student), 1, tempfile);
 	}
 	fclose(fp);
 	fclose(tempfile);
@@ -510,7 +507,7 @@ void search_record()
 	int n = no_of_records();
 
 	// opening the file to read data and search
-	fp = fopen("record.dat", "rb");
+	FILE *fp = fopen("record.dat", "rb");
 	if (fp == NULL || n == 0)
 	{
 		red();
@@ -528,7 +525,7 @@ void search_record()
 	reset();
 
 	// reading the file and display the result with is equal to the entered array
-	while (fread(&std, sizeof(std), 1, fp))
+	while (fread(&std, sizeof(struct student), 1, fp))
 	{
 		if (strcmp(name, std.name) == 0)
 		{
@@ -549,7 +546,7 @@ void search_record()
 			printf("\n\n\t%-25sMARKS\n", "SUBJECT");
 			printf("\t-------------------------------\n");
 			reset();
-			for (j = 0; j < setup.subs; j++)
+			for (int j = 0; j < setup.subs; j++)
 			{
 				printf("\t%-25s%6.2f\n", setup.subject[j], std.marks[j]);
 			}
@@ -577,7 +574,7 @@ void delete_record()
 
 	// creating a new temp file to store new updated data
 	FILE *tempfile = fopen("tempfile.dat", "wb");
-	fp = fopen("record.dat", "rb");
+	FILE *fp = fopen("record.dat", "rb");
 	if (fp == NULL || record_count == 0)
 	{
 		red();
@@ -590,7 +587,7 @@ void delete_record()
 	// displaying the records, so that user can select which record to delete
 	printf("\n\n\tROLL\t%-30sTOTAL\t\tPERCENT\t\t%-12sGRADE\n", "NAME", "GPA");
 	printf("\t--------------------------------------------------------------------------------------------\n");
-	while (fread(&std, sizeof(std), 1, fp))
+	while (fread(&std, sizeof(struct student), 1, fp))
 	{
 		printf("\t%02d\t%-30s%06.2f\t\t%6.2f %%\t%-14.2f%s\n", std.roll, std.name, std.total, std.percent, std.gpa, std.grade);
 	}
@@ -602,12 +599,12 @@ void delete_record()
 	scanf("%d", &rollno);
 	reset();
 
-	while (fread(&std, sizeof(std), 1, fp))
+	while (fread(&std, sizeof(struct student), 1, fp))
 	{
 		if (rollno == std.roll)
 			found = 1;
 		else
-			fwrite(&std, sizeof(std), 1, tempfile);
+			fwrite(&std, sizeof(struct student), 1, tempfile);
 	}
 	fclose(fp);
 	fclose(tempfile);
@@ -620,9 +617,9 @@ void delete_record()
 		fp = fopen("record.dat", "wb");
 		tempfile = fopen("tempfile.dat", "rb");
 
-		while (fread(&std, sizeof(std), 1, tempfile))
+		while (fread(&std, sizeof(struct student), 1, tempfile))
 		{
-			fwrite(&std, sizeof(std), 1, fp);
+			fwrite(&std, sizeof(struct student), 1, fp);
 		}
 		fclose(fp);
 		fclose(tempfile);
@@ -660,7 +657,7 @@ void sort_record()
 		int n = no_of_records(); // getting no of records
 
 		// opening file to read the data
-		fp = fopen("record.dat", "rb");
+		FILE *fp = fopen("record.dat", "rb");
 		if (fp == NULL || n == 0)
 		{
 			red();
@@ -672,7 +669,7 @@ void sort_record()
 
 		// allocating memory for struct s and storing file records in s[] as array
 		s = (struct student *)calloc(n, sizeof(struct student));
-		for (i = 0; i < n; i++)
+		for (int i = 0; i < n; i++)
 		{
 			fread(&s[i], sizeof(struct student), 1, fp);
 		}
@@ -690,8 +687,8 @@ void sort_record()
 		case 1:
 			header("SORTING BY NAME");
 			// sorting according to alphabetical order
-			for (i = 0; i < n; i++)
-				for (j = i + 1; j < n; j++)
+			for (int i = 0; i < n; i++)
+				for (int j = i + 1; j < n; j++)
 				{
 					if (strcmp(s[i].name, s[j].name) > 0)
 					{
@@ -704,8 +701,8 @@ void sort_record()
 		case 2:
 			header("SORTING BY ROLLNO");
 			// sorting according to rollno of students
-			for (i = 0; i < n; i++)
-				for (j = i + 1; j < n; j++)
+			for (int i = 0; i < n; i++)
+				for (int j = i + 1; j < n; j++)
 				{
 					if (s[i].roll > s[j].roll)
 					{
@@ -718,8 +715,8 @@ void sort_record()
 		case 3:
 			header("SORTING BY GPA");
 			// sorting according to gpa
-			for (i = 0; i < n; i++)
-				for (j = i + 1; j < n; j++)
+			for (int i = 0; i < n; i++)
+				for (int j = i + 1; j < n; j++)
 				{
 					if (s[i].gpa < s[j].gpa)
 					{
@@ -732,7 +729,7 @@ void sort_record()
 			// Displaying the sorted result
 			printf("\n\n\tRANK\tROLL\t%-30sTOTAL\t\tPERCENT\t\t%-12sGRADE\n", "NAME", "GPA");
 			printf("\t-------------------------------------------------------------------------------------------------\n");
-			for (i = 0; i < n; i++)
+			for (int i = 0; i < n; i++)
 			{
 				printf("\t %02d\t %02d\t%-30s%06.2f\t\t%6.2f %%\t%-14.2f%s\n", i + 1, s[i].roll, s[i].name, s[i].total, s[i].percent, s[i].gpa, s[i].grade);
 			}
@@ -745,8 +742,8 @@ void sort_record()
 		case 4:
 			header("SORTING BY SERIALNO.");
 			// sorting according to alphabetical order and giving serial number
-			for (i = 0; i < n; i++)
-				for (j = i + 1; j < n; j++)
+			for (int i = 0; i < n; i++)
+				for (int j = i + 1; j < n; j++)
 				{
 					if (strcmp(s[i].name, s[j].name) > 0)
 					{
@@ -759,7 +756,7 @@ void sort_record()
 			// Displaying the sorted result
 			printf("\n\n\tSN.\t%-30sTOTAL\t\tPERCENT\t\t%-12sGRADE\n", "NAME", "GPA");
 			printf("\t---------------------------------------------------------------------------------------------\n");
-			for (i = 0; i < n; i++)
+			for (int i = 0; i < n; i++)
 			{
 				printf("\t%02d\t%-30s%06.2f\t\t%6.2f %%\t%-14.2f%s\n", i + 1, s[i].name, s[i].total, s[i].percent, s[i].gpa, s[i].grade);
 			}
@@ -772,8 +769,8 @@ void sort_record()
 		case 5:
 			header("SPREADSHEET");
 			// sorting according to gpa
-			for (i = 0; i < n; i++)
-				for (j = i + 1; j < n; j++)
+			for (int i = 0; i < n; i++)
+				for (int j = i + 1; j < n; j++)
 				{
 					if (s[i].gpa < s[j].gpa)
 					{
@@ -785,20 +782,20 @@ void sort_record()
 			// displaying the sorted record
 
 			printf("\n\n\tRANK\tROLL\t%-28s", "NAME");
-			for (i = 0; i < setup.subs; i++)
+			for (int i = 0; i < setup.subs; i++)
 			{
 				printf("\t%.4s.", setup.subject[i]);
 			}
 			printf("\t%-9s %-11s \tGPA\tGRADE\n\t", "TOTAL", "PERCENT");
 
-			for (i = 0; i < 140; i++) // for line design
+			for (int i = 0; i < 140; i++) // for line design
 				printf("-");
 			printf("\n");
 			// displaying all the data including individual marks in each subjects
-			for (i = 0; i < n; i++)
+			for (int i = 0; i < n; i++)
 			{
 				printf("\t %02d\t %02d\t%-28s%", i + 1, s[i].roll, s[i].name);
-				for (j = 0; j < setup.subs; j++)
+				for (int j = 0; j < setup.subs; j++)
 				{
 					printf("\t%05.1f", s[i].marks[j]);
 				}
@@ -818,7 +815,7 @@ void sort_record()
 			// displaying the sorted record
 			printf("\n\n\tROLL\t%-30sTOTAL\t\tPERCENT\t\t%-12sGRADE\n", "NAME", "GPA");
 			printf("\t---------------------------------------------------------------------------------------------\n");
-			for (i = 0; i < n; i++)
+			for (int i = 0; i < n; i++)
 			{
 				printf("\t%02d\t%-30s%06.2f\t\t%6.2f %%\t%-14.2f%s\n", s[i].roll, s[i].name, s[i].total, s[i].percent, s[i].gpa, s[i].grade);
 			}
@@ -830,7 +827,60 @@ void sort_record()
 
 	} while (choice != 0);
 } // end of sort_records()
+void addAnotherRecord()
+{
 
+	header("ADD ANOTHER EXAMINATION RECORD");
+
+	char folderName[50] = "md ";
+	char fileName[50] = "";
+	char appName[50] = "";
+
+	printf("\n\n\tEnter Programme (For e.g: BCA, BBA): ");
+	scanf(" %32[^\n]", newExam.programme);
+	printf("\tEnter semester (For e.g: 1,2,3): ");
+	scanf("%d", &newExam.semester);
+	printf("\tEnter Exam Name(without Space): ");
+	scanf(" %32[^\n]", newExam.examName);
+	fflush(stdin);
+new_subs_again:
+	printf("\tEnter No. Of Subjects: ");
+	scanf("%d", &newExam.subs);
+	if (newExam.subs > 10 || newExam.subs <= 0)
+	{
+		red();
+		printf("\t(Sorry! 0 < Subject <= 10)\n");
+		reset();
+		goto new_subs_again;
+	}
+	printf("\n");
+	for (int i = 0; i < newExam.subs; i++)
+	{
+		fflush(stdin);
+		printf("\tEnter Name of subject %d: ", i + 1);
+		scanf(" %24[^\n]", newExam.subject[i]);
+	}
+	// making a file in new folder
+	strcat(folderName, newExam.examName);
+	// making folder
+	system(folderName);
+
+	strcat(fileName, newExam.examName);
+	strcat(fileName, "\\setup.dat");
+
+	FILE *fp = fopen(fileName, "wb");
+	fwrite(&newExam, sizeof(struct newSetup), 1, fp);
+	fclose(fp);
+
+	green();
+	printf("\n\tYou will be directed to the new setup.\n");
+	purple();
+
+	printf("%s", appName);
+	printf("\n\t");
+	system("pause");
+	reset();
+}
 // to make user input details, just declaring a seperate func , maybe used multiple times so
 void input_details()
 {
@@ -860,15 +910,16 @@ name_again:
 	fflush(stdin);
 	printf("\tEnter Address: ");
 	scanf(" %[^\n]s", std.address);
-	// phone_again:
+phone_again:
 	printf("\tEnter Phone Number: ");
 	scanf(" %[^\n]s", std.phone);
-	//	if(strlen(std.phone)!=10){
-	//		red();
-	//		printf("\t(Phone Number should be 10 Digits)\n");
-	//		reset();
-	//		goto phone_again;
-	//	}
+	if (strlen(std.phone) != 10)
+	{
+		red();
+		printf("\t(Phone Number should be 10 Digits!)\n");
+		reset();
+		goto phone_again;
+	}
 	printf("\n\tAcademic Details\n\t----------------\n");
 rollno_again:
 	fflush(stdin);
@@ -891,7 +942,7 @@ rollno_again:
 		goto rollno_again;
 	}
 
-	for (j = 0; j < setup.subs; j++)
+	for (int j = 0; j < setup.subs; j++)
 	{
 	again_marks:
 		fflush(stdin);
@@ -950,7 +1001,7 @@ void header(char *title)
 	printf("\n\t%s\n\n", title);
 
 	// blue-bar
-	for (i = 0; i < 156; i++)
+	for (int i = 0; i < 156; i++)
 		printf("%c", 219); // 178,219,176,206,247 looks good
 	reset();
 	printf("\n");
@@ -983,7 +1034,7 @@ char *grade_calc(float percent)
 int no_of_records()
 {
 	int n;
-	fp = fopen("record.dat", "rb");
+	FILE *fp = fopen("record.dat", "rb");
 	if (fp == NULL)
 	{
 		red();
@@ -1016,7 +1067,7 @@ int nameChecker(char *name)
 			return 2;
 		}
 	}
-	for (i = 0; name[i] != '\0'; i++)
+	for (int i = 0; name[i] != '\0'; i++)
 	{
 		if ((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= 'A' && name[i] <= 'Z')) // sorry elon musk and sons
 			flag = 0;
@@ -1053,7 +1104,7 @@ void login()
 	char userinput[10], pass[10];
 	int filesize = ftell(fsettings);
 
-	while (fread(&setup.settings, sizeof(struct settings), 1, fsettings))
+	while (fread(&setup.setting, sizeof(struct settings), 1, fsettings))
 		;
 	fclose(fsettings);
 
@@ -1065,7 +1116,7 @@ void login()
 	printf("\tEnter Password: ");
 	scanf(" %10[^\n]", pass);
 
-	if (strcmp(setup.settings.username, userinput) == 0 && strcmp(setup.settings.password, pass) == 0)
+	if (strcmp(setup.setting.username, userinput) == 0 && strcmp(setup.setting.password, pass) == 0)
 	{
 		menu();
 	}
@@ -1084,9 +1135,10 @@ void sort_file()
 {
 	header("SORTING RECORDS INSIDE THE FILE");
 
+	int i, j;
 	int n = no_of_records(); // getting no of records
 	int choice;
-	fp = fopen("record.dat", "rb");
+	FILE *fp = fopen("record.dat", "rb");
 	if (fp == NULL || n == 0)
 	{
 		red();
@@ -1217,55 +1269,7 @@ void misc()
 			changeUsername();
 			break;
 		case 5:
-			header("ADD ANOTHER EXAMINATION RECORD");
-
-			char folderName[50] = "md ";
-			char fileName[50] = "";
-
-			printf("\n\n\tEnter Programme (For e.g: BCA, BBA): ");
-			scanf(" %32[^\n]", newExam.programme);
-			printf("\tEnter semester (For e.g: 1,2,3): ");
-			scanf("%d", &newExam.semester);
-			printf("\tEnter Exam Name(without Space): ");
-			scanf(" %32[^\n]", newExam.examName);
-			fflush(stdin);
-		new_subs_again:
-			printf("\tEnter No. Of Subjects: ");
-			scanf("%d", &newExam.subs);
-			if (newExam.subs > 10 || newExam.subs <= 0)
-			{
-				red();
-				printf("\t(Sorry! 0 < Subject <= 10)\n");
-				reset();
-				goto new_subs_again;
-			}
-			printf("\n");
-			for (i = 0; i < newExam.subs; i++)
-			{
-				fflush(stdin);
-				printf("\tEnter Name of subject %d: ", i + 1);
-				scanf(" %24[^\n]", newExam.subject[i]);
-			}
-			//making a file in new folder
-			strcat(folderName,newExam.examName);
-			//making folder
-			system(folderName);
-
-			strcat(fileName,newExam.examName);
-			strcat(fileName,"\\setup.dat");
-
-			FILE *fp = fopen(fileName,"wb");
-			fwrite(&newExam,sizeof(struct newSetup),1,fp);
-			fclose(fp);
-
-			green();
-			printf("\n\tYou will be directed to the new setup.\n");
-			purple();
-			printf("\n\t");
-			system("pause");
-			reset();
-
-
+			addAnotherRecord();
 			break;
 		case 6:
 			red();
@@ -1308,33 +1312,33 @@ void changetheme()
 	case 1:
 		system("color f8");
 		black();
-		strcpy(setup.settings.defaultcolor, "\033[1;30m");
+		strcpy(setup.setting.defaultcolor, "\033[1;30m");
 		break;
 	case 2:
 		system("color 0f");
 		break;
 	case 3:
 		red();
-		strcpy(setup.settings.defaultcolor, "\033[1;31m");
+		strcpy(setup.setting.defaultcolor, "\033[1;31m");
 		break;
 	case 4:
 		purple();
-		strcpy(setup.settings.defaultcolor, "\033[1;35m");
+		strcpy(setup.setting.defaultcolor, "\033[1;35m");
 		break;
 	case 5:
 		blue();
-		strcpy(setup.settings.defaultcolor, "\033[1;34m");
+		strcpy(setup.setting.defaultcolor, "\033[1;34m");
 		break;
 	case 6:
 		green();
-		strcpy(setup.settings.defaultcolor, "\033[1;32m");
+		strcpy(setup.setting.defaultcolor, "\033[1;32m");
 		break;
 	case 0:
 		menu();
 		break;
 	}
 	// writing the selected color in the file if the program restart any time(tomorrow,next week, next year)
-	fwrite(&setup.settings, sizeof(struct settings), 1, fsettings);
+	fwrite(&setup.setting, sizeof(struct settings), 1, fsettings);
 	fclose(fsettings);
 }
 
@@ -1347,8 +1351,8 @@ void changeUsername()
 	char ch = fgetc(fsettings);
 	if (ch == EOF)
 	{
-		strcpy(setup.settings.username, "admin");
-		strcpy(setup.settings.password, "password");
+		strcpy(setup.setting.username, "admin");
+		strcpy(setup.setting.password, "password");
 	}
 try_pw:
 	fflush(stdin);
@@ -1357,13 +1361,13 @@ try_pw:
 	scanf(" %[^\n]s", pw);
 	reset();
 	// if the current password matches then only ask for new username and password
-	if (strcmp(pw, setup.settings.password) == 0)
+	if (strcmp(pw, setup.setting.password) == 0)
 	{
 	new_user_again:
 		fflush(stdin);
 		printf("\n\tEnter New Username: ");
-		scanf(" %[^\n]s", setup.settings.username);
-		if (strlen(setup.settings.username) > 10 || strlen(setup.settings.username) < 5)
+		scanf(" %[^\n]s", setup.setting.username);
+		if (strlen(setup.setting.username) > 10 || strlen(setup.setting.username) < 5)
 		{
 			red();
 			printf("\n\t(Username cannot be less than 5 characters or more than 10 characters.)\n");
@@ -1373,8 +1377,8 @@ try_pw:
 	new_pw_again:
 		fflush(stdin);
 		printf("\tEnter New Password: ");
-		scanf(" %[^\n]s", setup.settings.password);
-		if (strlen(setup.settings.password) > 10 || strlen(setup.settings.password) < 5)
+		scanf(" %[^\n]s", setup.setting.password);
+		if (strlen(setup.setting.password) > 10 || strlen(setup.setting.password) < 5)
 		{
 			red();
 			printf("\n\t(Password cannot be less than 5 characters or more than 10 characters.)\n");
@@ -1391,7 +1395,7 @@ try_pw:
 	}
 
 	// saving new details in the file for another time
-	fwrite(&setup.settings, sizeof(struct settings), 1, fsettings);
+	fwrite(&setup.setting, sizeof(struct settings), 1, fsettings);
 	green();
 	printf("\n\tUSERNAME & PASSWORD SUCCESSFULLY CHANGED.\n\n\t");
 	purple();
@@ -1407,7 +1411,7 @@ void gradesheet()
 	int n = no_of_records();
 
 	// opening the file to read data and search
-	fp = fopen("record.dat", "rb");
+	FILE *fp = fopen("record.dat", "rb");
 	if (fp == NULL || n == 0)
 	{
 		red();
@@ -1424,7 +1428,7 @@ void gradesheet()
 	reset();
 
 	// reading the file and display the result with is equal to the entered array
-	while (fread(&std, sizeof(std), 1, fp))
+	while (fread(&std, sizeof(struct student), 1, fp))
 	{
 		if (rno == std.roll)
 		{
@@ -1440,7 +1444,7 @@ void gradesheet()
 
 			printf("\n\tSN\t%-30sCREDIT\tMARKS\tGRADE\tGRADE-POINT\n", "SUBJECT");
 			printf("\t---------------------------------------------------------------------------\n");
-			for (j = 0; j < setup.subs; j++)
+			for (int j = 0; j < setup.subs; j++)
 			{
 				printf("\t%02d\t%-30s\t4.0\t%.2f\t  %s\t   %.2f\n", j + 1, setup.subject[j], std.marks[j], grade_calc(std.marks[j]), std.marks[j] / 25);
 			}
@@ -1476,9 +1480,9 @@ void gettheme()
 	int i = 0, filesize = ftell(fsettings);
 	if (fsettings == NULL || filesize == 0)
 	{
-		strcpy(setup.settings.defaultcolor, "\033[1;30m"); // default is black so if file is not found just apply black color to text
+		strcpy(setup.setting.defaultcolor, "\033[1;30m"); // default is black so if file is not found just apply black color to text
 	}
-	while (fread(&setup.settings, sizeof(struct settings), 1, fsettings))
+	while (fread(&setup.setting, sizeof(struct settings), 1, fsettings))
 		;
 
 	fclose(fsettings);
@@ -1507,7 +1511,7 @@ void yellow()
 void reset()
 {
 	// this will be the default font
-	printf("%s", setup.settings.defaultcolor);
+	printf("%s", setup.setting.defaultcolor);
 }
 void blue()
 {
