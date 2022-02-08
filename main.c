@@ -14,6 +14,16 @@
 FILE *fp;
 int i, j;
 
+// structure for another exam
+struct newSetup
+{
+	char programme[33];
+	int semester;
+	char examName[33];
+	int subs;
+	char subject[10][25];
+} newExam;
+
 // structure for setup and saving password and theme details
 struct setup
 {
@@ -21,9 +31,9 @@ struct setup
 	char address[33];
 	char programme[33];
 	int semester;
+	char examName[33];
 	int subs;
 	char subject[10][25];
-
 	struct settings
 	{
 		char username[11];
@@ -1043,13 +1053,6 @@ void login()
 	char userinput[10], pass[10];
 	int filesize = ftell(fsettings);
 
-	//	//if file is not created or empty
-	//	if(fsettings == NULL || filesize == 0){
-	//		strcpy(settings.username, "admin");
-	//		strcpy(settings.password, "password");
-	//		strcpy(settings.defaultcolor,"\033[1;30m");
-	//	}
-	// reading stored username and password
 	while (fread(&setup.settings, sizeof(struct settings), 1, fsettings))
 		;
 	fclose(fsettings);
@@ -1057,10 +1060,10 @@ void login()
 	fflush(stdin);
 	reset();
 	printf("\n\n\tEnter Username: ");
-	scanf(" %[^\n]s", userinput);
+	scanf(" %10[^\n]", userinput);
 	fflush(stdin);
 	printf("\tEnter Password: ");
-	scanf(" %[^\n]s", pass);
+	scanf(" %10[^\n]", pass);
 
 	if (strcmp(setup.settings.username, userinput) == 0 && strcmp(setup.settings.password, pass) == 0)
 	{
@@ -1153,11 +1156,14 @@ void sort_file()
 	else
 		menu();
 
+	// making changes in the file
 	fp = fopen("record.dat", "wb");
 	for (i = 0; i < n; i++)
 	{
 		fwrite(&s[i], sizeof(struct student), 1, fp);
 	}
+
+	free(s);
 	fclose(fp);
 	green();
 	printf("\n\tFILE SUCCESSFULLY REARRANGED!\n\n\t");
@@ -1172,7 +1178,7 @@ void misc()
 	do
 	{
 		header("SETTINGS");
-		printf("\n\t1.DELETE ALL RECORDS AT ONCE\n\t2.ARRANGE RECORDS (IN FILE)\n\t3.CHANGE THEME\n\t4.CHANGE USERNAME & PASSWORD\n\t5.LOG OUT & EXIT\n\t6.CHANGE SETUP SETTINGS\n\t7.ABOUT\n\t0.Back to Menu\n");
+		printf("\n\t1.DELETE ALL RECORDS AT ONCE\n\t2.ARRANGE RECORDS (IN FILE)\n\t3.CHANGE THEME\n\t4.CHANGE USERNAME & PASSWORD\n\t5.ADD ANOTHER EXAM RECORD\n\t6.CHANGE SETUP SETTINGS\n\t7.ABOUT\n\t0.Back to Menu\n");
 
 		green();
 		printf("\n\tEnter a choice:\n\t>> ");
@@ -1211,22 +1217,69 @@ void misc()
 			changeUsername();
 			break;
 		case 5:
-			red();
-			printf("\n\tLoging Out...");
+			header("ADD ANOTHER EXAMINATION RECORD");
+
+			char folderName[50] = "md ";
+			char fileName[50] = "";
+
+			printf("\n\n\tEnter Programme (For e.g: BCA, BBA): ");
+			scanf(" %32[^\n]", newExam.programme);
+			printf("\tEnter semester (For e.g: 1,2,3): ");
+			scanf("%d", &newExam.semester);
+			printf("\tEnter Exam Name(without Space): ");
+			scanf(" %32[^\n]", newExam.examName);
+			fflush(stdin);
+		new_subs_again:
+			printf("\tEnter No. Of Subjects: ");
+			scanf("%d", &newExam.subs);
+			if (newExam.subs > 10 || newExam.subs <= 0)
+			{
+				red();
+				printf("\t(Sorry! 0 < Subject <= 10)\n");
+				reset();
+				goto new_subs_again;
+			}
+			printf("\n");
+			for (i = 0; i < newExam.subs; i++)
+			{
+				fflush(stdin);
+				printf("\tEnter Name of subject %d: ", i + 1);
+				scanf(" %24[^\n]", newExam.subject[i]);
+			}
+			//making a file in new folder
+			strcat(folderName,newExam.examName);
+			//making folder
+			system(folderName);
+
+			strcat(fileName,newExam.examName);
+			strcat(fileName,"\\setup.dat");
+
+			FILE *fp = fopen(fileName,"wb");
+			fwrite(&newExam,sizeof(struct newSetup),1,fp);
+			fclose(fp);
+
+			green();
+			printf("\n\tYou will be directed to the new setup.\n");
+			purple();
+			printf("\n\t");
+			system("pause");
 			reset();
-			exit(0);
+
+
 			break;
 		case 6:
 			red();
 			printf("\n\tWarning! Changing setup will remove all the previous records from the program\n");
-			remove("user.dat");
-			rename("record.dat", "backup.dat");
 			reset();
 
 			printf("\n\n\tDo you really want to Continue?(y/n)\n\t>> ");
 			scanf(" %c", &yesno);
 			if (yesno == 'y' || yesno == 'Y')
+			{
+				remove("user.dat");
+				rename("record.dat", "backup.dat");
 				firstsetup();
+			}
 			else
 				menu();
 			break;
